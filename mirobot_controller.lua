@@ -1,19 +1,3 @@
--- ═══════════════════════════════════════════════════════════════
---  Mirobot Controller — paste this as /Mirobot's child script
--- ═══════════════════════════════════════════════════════════════
---  Non-threaded child script.
---    (a) IK succeeds but scene diverges (kinematic coupling the IK
---        env doesn't know about — e.g., a parallelogram linkage),
---    (b) IK fails (target outside reachable workspace with alpha_beta),
---    (c) Sync misconfigured between IK env and scene.
---
---  IK setup:
---    • constraint_position + constraint_alpha_beta (5-DOF):
---      tip XYZ is constrained AND the tip's Z-axis direction is
---      locked to target's Z-axis.  Yaw is free.
---    • Target orientation is FORCED at init to world Euler (pi,0,0),
---      so target's +Z points world-down.
--- ═══════════════════════════════════════════════════════════════
 local FINGER_OPEN_X   = 0.010
 local FINGER_CLOSED_X = 0.005
 local FINGER_Z_OFFSET = 0.030
@@ -63,6 +47,15 @@ function sysCall_init()
             pcall(sim.setJointMode, jointHandles[i],
                 sim.jointmode_dynamic, 0)
         end
+
+        local j2_min = -110 * math.pi / 180
+        local j2_max =   75 * math.pi / 180
+        sim.setJointInterval(jointHandles[2], false,
+            {j2_min, j2_max - j2_min})
+        print(string.format(
+            '[init] joint2 range widened to [%+.3f, %+.3f] rad '
+            .. '(%+d°, %+d°) per Wlkata Mirobot manufacturer spec',
+            j2_min, j2_max, -110, 75))
 
         local curProp = sim.getModelProperty(base)
         if (curProp & sim.modelproperty_not_dynamic) == 0 then
