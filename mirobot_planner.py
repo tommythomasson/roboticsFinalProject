@@ -14,7 +14,6 @@ USAGE
   python3 mirobot_planner.py [pattern]
   pattern ∈ {smiley, heart, flag} or a path to a PNG.
 """
-
 import math
 import sys
 import time
@@ -43,6 +42,11 @@ APPROACH    = 0.030
 HOME_XYZ    = (0.14, 0.00, 0.20)
 
 SHELL_R     = 0.145
+
+PAUSE_AT_PICK       = 0.4
+PAUSE_AFTER_GRIP    = 0.4
+PAUSE_AT_PLACE      = 0.4
+PAUSE_AFTER_RELEASE = 0.4
 
 BELT_TOP_Z  = PICK_Z  - BLOCK / 2
 MAT_TOP_Z   = PLACE_Z - BLOCK / 2
@@ -704,6 +708,7 @@ def main():
         _, d_p = move_and_wait(sim,
             PICK_X, PICK_Y, pick_tip_z, tol=0.018)
         print(f'  PICK  d_pick={d_p:.3f}')
+        time.sleep(PAUSE_AT_PICK)
 
         gripped = rpc(sim, 'grip')
         if not gripped:
@@ -711,6 +716,7 @@ def main():
             move_and_wait(sim,
                 PICK_X, PICK_Y, approach_pick, tol=0.020, verbose=False)
             continue
+        time.sleep(PAUSE_AFTER_GRIP)
 
         move_and_wait(sim,
             PICK_X, PICK_Y, approach_pick, tol=0.020, verbose=False)
@@ -723,9 +729,11 @@ def main():
             px, py, approach_plc, tol=0.020, verbose=False)
         _, d_pl = move_and_wait(sim, px, py, place_tip_z, tol=0.020)
         print(f'  PLACE ({px:.3f}, {py:.3f}, {pz:.3f})  d={d_pl:.3f}')
-        rpc(sim, 'release')
+        time.sleep(PAUSE_AT_PLACE)
 
+        rpc(sim, 'release')
         _snap_block_to_cell(sim, block_h, (px, py, pz))
+        time.sleep(PAUSE_AFTER_RELEASE)
 
         move_and_wait(sim,
             px, py, approach_plc, tol=0.020, verbose=False)
